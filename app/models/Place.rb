@@ -51,4 +51,14 @@ def self.find(id)
 	end
 end
 
+def self.all(offset = 0, limit = 0)
+	col = []
+	all = collection.find.limit(limit).skip(offset)
+	all.each { |x|
+		col<<Place.new(x)
+	}
+	return col
+end
+
+
 end
