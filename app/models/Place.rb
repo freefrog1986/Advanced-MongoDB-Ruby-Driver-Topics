@@ -84,5 +84,14 @@ def self.get_address_components(sort = nil, offset = 0, limit = nil)
 	collection.aggregate(arr)
 end
 
+def self.get_country_names
+	arr=[]
+	arr << {:$unwind => '$address_components'}
+	arr << {:$project => {:_id=>0, :address_components=>{:long_name=>1,:types=>1}}}
+	arr << {:$match => {'address_components.types': "country"}}
+	arr << {:$group=>{ :_id=>'$address_components.long_name', :count=>{:$sum=>1}}}
+
+	collection.aggregate(arr).to_a.map {|h| h[:_id]}
+end
 
 end
