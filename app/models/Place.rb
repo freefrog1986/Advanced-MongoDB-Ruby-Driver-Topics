@@ -51,13 +51,21 @@ def self.find(id)
 	end
 end
 
-def self.all(offset = 0, limit = 0)
-	col = []
-	all = collection.find.limit(limit).skip(offset)
-	all.each { |x|
-		col<<Place.new(x)
-	}
-	return col
+def self.all(offset = 0, limit = nil)
+    if !limit.nil?
+      docs = collection.find.skip(offset).limit(limit)
+    else
+      docs = collection.find.skip(offset)
+    end
+
+    docs.map { |doc|
+      Place.new(doc)
+    }
+end
+
+def destroy
+	_id = BSON::ObjectId.from_string(@id)
+	self.class.collection.find(:_id => _id).delete_one
 end
 
 
