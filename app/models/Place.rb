@@ -94,4 +94,12 @@ def self.get_country_names
 	collection.aggregate(arr).to_a.map {|h| h[:_id]}
 end
 
+def self.find_ids_by_country_code(cc)
+	arr =[]
+	arr << {:$match => {'address_components.types': "country"}}
+	arr << {:$match => {'address_components.short_name': cc}}
+	arr << {:$project => {:_id=>1}}
+	collection.aggregate(arr).map {|doc| doc[:_id].to_s}
+end
+
 end
