@@ -68,5 +68,21 @@ def destroy
 	self.class.collection.find(:_id => _id).delete_one
 end
 
+def self.get_address_components(sort = nil, offset = 0, limit = nil)
+	arr = []
+	arr << {:$unwind=>"$address_components"}
+	arr << {:$project=>{:_id=>1, :address_components=>1, :formatted_address=>1, :geometry=>{:geolocation=>1}}}
+	if !sort.nil?
+		arr << {:$sort => sort}
+	end
+	if offset!=0
+		arr << {:$skip => offset}
+	end
+	if !limit.nil?
+		arr << {:$limit => limit}
+	end
+	collection.aggregate(arr)
+end
+
 
 end
