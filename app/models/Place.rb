@@ -41,4 +41,14 @@ def self.to_places(ms)
     return p
 end
 
+def self.find(id)
+	_id = BSON::ObjectId.from_string(id)
+	p = collection.find(:_id => _id).first
+	if !p.nil?
+		Place.new(p)
+	else
+		nil
+	end
+end
+
 end
