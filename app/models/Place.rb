@@ -88,7 +88,7 @@ def self.get_country_names
 	arr=[]
 	arr << {:$unwind => '$address_components'}
 	arr << {:$project => {:_id=>0, :address_components=>{:long_name=>1,:types=>1}}}
-	arr << {:$match => {'address_components.types': "country"}}
+	arr << {:$match => {'address_components.types':"country"}}
 	arr << {:$group=>{ :_id=>'$address_components.long_name', :count=>{:$sum=>1}}}
 
 	collection.aggregate(arr).to_a.map {|h| h[:_id]}
@@ -100,6 +100,14 @@ def self.find_ids_by_country_code(cc)
 	arr << {:$match => {'address_components.short_name': cc}}
 	arr << {:$project => {:_id=>1}}
 	collection.aggregate(arr).map {|doc| doc[:_id].to_s}
+end
+
+def self.create_indexes
+	collection.indexes.create_one({'geometry.geolocation': Mongo::Index::GEO2DSPHERE})
+end
+
+def self.remove_indexes
+	collection.indexes.drop_one('geometry.geolocation_2dsphere')
 end
 
 end
