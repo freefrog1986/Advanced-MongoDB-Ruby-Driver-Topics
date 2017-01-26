@@ -5,13 +5,11 @@ attr_accessor :id, :formatted_address, :location, :address_components
 def initialize(params)
 	@id = params[:_id].to_s
 	@formatted_address = params[:formatted_address]
-
 	@address_components = []
     if !params[:address_components].nil?
       address_components = params[:address_components]
       address_components.each { |a| @address_components << AddressComponent.new(a) }
     end
-	
 	@location = Point.new(params[:geometry][:geolocation])
 end
 
@@ -109,5 +107,24 @@ end
 def self.remove_indexes
 	collection.indexes.drop_one('geometry.geolocation_2dsphere')
 end
+
+def self.near(point, max_meters = nil)
+	near_hash ={}
+	near_hash['$near'] = point.to_hash
+	if !max_meters.nil?
+		near_hash[:$maxDistance] = max_meters.to_i
+	end
+	collection.find({:'geometry.geolocation'=> near_hash})
+end
+
+def near(max_meters = nil)
+	near_points = []
+	pa_near=self.class.near(@location,max_meters)
+	pa_near.each { |p| 
+        near_points << Place.new(p)
+      }
+     return near_points
+end
+
 
 end
