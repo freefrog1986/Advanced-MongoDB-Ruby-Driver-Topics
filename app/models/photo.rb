@@ -54,6 +54,7 @@ def save
     end
 end
 
+# first find the right object, then map all the docs to implement the method
 def self.all(offset = 0, limit = nil)
 	if !limit.nil?
 	docs = mongo_client.database.fs.find.skip(offset).limit(limit)
@@ -63,11 +64,26 @@ def self.all(offset = 0, limit = nil)
 	docs.map{|doc| Photo.new(doc)}
 end
 
+# before return the photo instance, you should check out if the object is nil
+# you don't have to set the id and location property cause it will set in Photo.new method
 def self.find(params)
 	id = BSON::ObjectId.from_string(params)
 	p = mongo_client.database.fs.find(:_id => id).first
 	p.nil? ? nil : photo = Photo.new(p)
 end
+
+# the attr_writer :contents means that you can't get the conten of f, so copy one. 
+def contents
+   f = self.class.mongo_client.database.fs.find_one(:_id=>BSON::ObjectId.from_string(@id))
+    if f 
+      buffer = ""
+      f.chunks.reduce([]) do |x,chunk| 
+          buffer << chunk.data.data 
+      end
+      return buffer
+    end 
+end
+
 
 
 
