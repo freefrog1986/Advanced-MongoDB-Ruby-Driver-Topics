@@ -84,7 +84,10 @@ def contents
     end 
 end
 
-
+# destroy should find and delete all fils that match the conditions, so use find instead of find_one 
+def destroy
+	self.class.mongo_client.database.fs.find(:_id=>BSON::ObjectId.from_string(@id)).delete_one
+end
 
 
 end
