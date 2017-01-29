@@ -55,7 +55,6 @@ def save
 end
 
 def self.all(offset = 0, limit = nil)
-	
 	if !limit.nil?
 	docs = mongo_client.database.fs.find.skip(offset).limit(limit)
 	else
@@ -64,8 +63,11 @@ def self.all(offset = 0, limit = nil)
 	docs.map{|doc| Photo.new(doc)}
 end
 
-
-
+def self.find(params)
+	id = BSON::ObjectId.from_string(params)
+	p = mongo_client.database.fs.find(:_id => id).first
+	p.nil? ? nil : photo = Photo.new(p)
+end
 
 
 
