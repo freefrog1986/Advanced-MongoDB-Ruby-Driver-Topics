@@ -64,6 +64,10 @@ def self.all(offset = 0, limit = nil)
 	docs.map{|doc| Photo.new(doc)}
 end
 
+def find_nearest_place_id(dist)
+	Place.near(@location,dist).limit(1).projection({:_id=>1}).first[:_id]
+end
+
 # before return the photo instance, you should check out if the object is nil
 # you don't have to set the id and location property cause it will set in Photo.new method
 def self.find(params)
