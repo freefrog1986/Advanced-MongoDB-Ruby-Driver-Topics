@@ -54,8 +54,14 @@ def save
     end
 end
 
-def method_name
+def self.all(offset = 0, limit = nil)
 	
+	if !limit.nil?
+	docs = mongo_client.database.fs.find.skip(offset).limit(limit)
+	else
+	docs = mongo_client.database.fs.find.skip(offset)
+	end
+	docs.map{|doc| Photo.new(doc)}
 end
 
 
