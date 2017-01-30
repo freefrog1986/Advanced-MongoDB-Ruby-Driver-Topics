@@ -2,6 +2,7 @@ class Photo
 include ActiveModel::Model
 attr_accessor :id, :location
 attr_writer :contents
+# set a custom setter/getter for attribute means you can define methods to get or set it.
 
 def self.mongo_client
 	Mongoid::Clients.default
@@ -12,12 +13,30 @@ end
 # method can help you figur this out.
 def initialize(params=nil)
     @id = params[:_id].to_s if !params.nil? && !params[:_id].nil?
+    @place = params[:metadata][:place] if !params.nil? && !params[:metadata][:place].nil?
     @location = Point.new(params[:metadata][:location]) if !params.nil? && !params[:metadata].nil?
 end
 
 def persisted?
 	!@id.nil?
 end
+
+# getter
+def place
+	if !@place.nil?
+		Place.find(@place.to_s)
+	end
+end
+
+# setter
+def place=(p)
+	if p.is_a? String
+	 @place=BSON::ObjectId.from_string(p)
+	else 
+	 @place=p
+	end
+ end
+
 
 # :contents is used to store the image 
 # f = File.open(’./db/image1.jpg’,’rb’)
@@ -47,6 +66,7 @@ def save
       # store the GeoJSON Point format of the image location
       location=Point.new(:lng=>gps.longitude, :lat=>gps.latitude)
       description[:metadata] = {
+      	:place => @place,
         :location => location.to_hash
       }
       # store the data contents in GridFS
@@ -59,7 +79,7 @@ def save
       doc = self.class.mongo_client.database.fs.find(
         '_id': BSON::ObjectId.from_string(@id)
       ).first
-      # doc[:metadata][:place] = @place
+      doc[:metadata][:place] = @place
       doc[:metadata][:location] = @location.to_hash
       self.class.mongo_client.database.fs.find(
         '_id': BSON::ObjectId.from_string(@id)
