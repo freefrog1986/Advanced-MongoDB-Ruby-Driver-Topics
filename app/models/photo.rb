@@ -26,6 +26,8 @@ end
 # Mongo::Grid::File.new() have two arguments, first one is the image(@contents.read),
 # the second one is description which store all the attributes.
 
+# when find out a document, don't forget to use .first
+# to update a document, use update_one and pass a doc object as it's agurment. 
 def save
 	# check whether the instance is already persisted
     if !persisted?
@@ -51,6 +53,14 @@ def save
       # sotre the location of Point class in the @location attribute
       @location = Point.new(location.to_hash)
     else
+      doc = self.class.mongo_client.database.fs.find(
+        '_id': BSON::ObjectId.from_string(@id)
+      ).first
+      # doc[:metadata][:place] = @place
+      doc[:metadata][:location] = @location.to_hash
+      self.class.mongo_client.database.fs.find(
+        '_id': BSON::ObjectId.from_string(@id)
+      ).update_one(doc)
     end
 end
 
