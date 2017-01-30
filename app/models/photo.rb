@@ -7,6 +7,9 @@ def self.mongo_client
 	Mongoid::Clients.default
 end
 
+# when creat a instance, no need to pass any paramters into the new method, 
+# so the instance may not have id and location, but don't worry, the save 
+# method can help you figur this out.
 def initialize(params=nil)
     @id = params[:_id].to_s if !params.nil? && !params[:_id].nil?
     @location = Point.new(params[:metadata][:location]) if !params.nil? && !params[:metadata].nil?
