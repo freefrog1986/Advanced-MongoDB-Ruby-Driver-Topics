@@ -37,6 +37,13 @@ def place=(p)
 	end
  end
 
+ def self.find_photos_for_place(param)
+ 	id = param.is_a?(String) ? BSON::ObjectId.from_string(param) : param
+ 	# mongo_client.database.fs.find({:metadata=>{:place=>id}})
+ 	mongo_client.database.fs.find("metadata.place": id)
+
+ end
+
 
 # :contents is used to store the image 
 # f = File.open(’./db/image1.jpg’,’rb’)
@@ -51,40 +58,46 @@ def place=(p)
 # when find out a document, don't forget to use .first
 # to update a document, use update_one and pass a doc object as it's agurment. 
 def save
-	# check whether the instance is already persisted
-    if !persisted?
-      # use the exifr gem to extract geolocation information from the jpeg image
-      gps = EXIFR::JPEG.new(@contents).gps
-      # Both EXIFR and GridFS will be reading the same file, 
-      # You must call rewind() on the file in between calls for the proper number 
-      # of bytes to be stored in GridFS.
-      @contents.rewind
-      # create a description array to store file property hashs
-      description={}
-      # store the content type of image/jpeg in the GridFS contentType file property
-      description[:content_type] = "image/jpeg"
-      # store the GeoJSON Point format of the image location
-      location=Point.new(:lng=>gps.longitude, :lat=>gps.latitude)
-      description[:metadata] = {
-      	:place => @place,
-        :location => location.to_hash
-      }
-      # store the data contents in GridFS
-      grid_file = Mongo::Grid::File.new(@contents.read, description)
-      # store the generated _id for the file in the :id property of the Photo model instance.
-      @id = self.class.mongo_client.database.fs.insert_one(grid_file).to_s
-      # sotre the location of Point class in the @location attribute
-      @location = Point.new(location.to_hash)
-    else
-      doc = self.class.mongo_client.database.fs.find(
-        '_id': BSON::ObjectId.from_string(@id)
-      ).first
-      doc[:metadata][:place] = @place
-      doc[:metadata][:location] = @location.to_hash
-      self.class.mongo_client.database.fs.find(
-        '_id': BSON::ObjectId.from_string(@id)
-      ).update_one(doc)
-    end
+	# @place is one of the attributs of instance, in order to update instance to database
+  # @place.id should be BSON::ObjectId format, so you should check this out and transform 
+  # if it is not a right format.
+	if @place.is_a? Place
+    @place = BSON::ObjectId.from_string(@place.id)
+  end
+  # check whether the instance is already persisted
+  if !persisted?
+    # use the exifr gem to extract geolocation information from the jpeg image
+    gps = EXIFR::JPEG.new(@contents).gps
+    # Both EXIFR and GridFS will be reading the same file, 
+    # You must call rewind() on the file in between calls for the proper number 
+    # of bytes to be stored in GridFS.
+    @contents.rewind
+    # create a description array to store file property hashs
+    description={}
+    # store the content type of image/jpeg in the GridFS contentType file property
+    description[:content_type] = "image/jpeg"
+    # store the GeoJSON Point format of the image location
+    location=Point.new(:lng=>gps.longitude, :lat=>gps.latitude)
+    description[:metadata] = {
+    	:place => @place,
+      :location => location.to_hash
+    }
+    # store the data contents in GridFS
+    grid_file = Mongo::Grid::File.new(@contents.read, description)
+    # store the generated _id for the file in the :id property of the Photo model instance.
+    @id = self.class.mongo_client.database.fs.insert_one(grid_file).to_s
+    # sotre the location of Point class in the @location attribute
+    @location = Point.new(location.to_hash)
+  else
+    doc = self.class.mongo_client.database.fs.find(
+      '_id': BSON::ObjectId.from_string(@id)
+    ).first
+    doc[:metadata][:place] = @place
+    doc[:metadata][:location] = @location.to_hash
+    self.class.mongo_client.database.fs.find(
+      '_id': BSON::ObjectId.from_string(@id)
+    ).update_one(doc)
+  end
 end
 
 # first find the right object, then map all the docs to implement the method

@@ -49,6 +49,17 @@ def self.find(id)
 	end
 end
 
+# limit equal to 0 means nolimit
+# if this a instance method to call a class method, use self.class. as the head of calling
+# find photo in mongo_client.database.fs while find other data in collection.
+def photos(offset=0, limit= 0)
+  self.class.mongo_client.database.fs.find(
+      "metadata.place": BSON::ObjectId.from_string(@id)
+    ).map { |photo|
+      Photo.new(photo)
+    }
+end
+
 def self.all(offset = 0, limit = nil)
     if !limit.nil?
       docs = collection.find.skip(offset).limit(limit)
